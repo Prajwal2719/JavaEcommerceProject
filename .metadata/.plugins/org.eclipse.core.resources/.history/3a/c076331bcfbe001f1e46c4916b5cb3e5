@@ -1,0 +1,93 @@
+package com.ecommerce.database;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import com.ecommerce.interfaces.PurchaseHistoryDAOInterface;
+
+public class PurchaseHistoryDAOImpl implements PurchaseHistoryDAOInterface {
+
+    @Override
+    public boolean purchaseItems(int userId) {
+        try (Connection conn = DataBaseConnection.connect()) {
+            String cartQuery = "SELECT cart_id, prod_id, quantity FROM Cart WHERE user_id = ?";
+            PreparedStatement cartStmt = conn.prepareStatement(cartQuery);
+            cartStmt.setInt(1, userId);
+            ResultSet cartRs = cartStmt.executeQuery();
+
+            boolean purchaseSuccessful = false;
+
+            while (cartRs.next()) {
+                int cartId = cartRs.getInt("cart_id");
+                int productId = cartRs.getInt("prod_id");
+                int quantity = cartRs.getInt("quantity");
+
+                String productExistQuery = "SELECT price, price FROM Products WHERE prod_id = ?";
+                PreparedStatement productExistStmt = conn.prepareStatement(productExistQuery);
+                productExistStmt.setInt(1, productId);
+                ResultSet productRs = productExistStmt.executeQuery();
+
+                if (!productRs.next()) {
+                    System.out.println("Product ID " + productId + " does not exist. Skipping item.");
+                    continue;
+                }
+
+                double price = productRs.getDouble("price");
+                int stock = productRs.getInt("price");
+
+                if (quantity > stock) {
+                    System.out.println("Insufficient stock for Product ID " + productId);
+                    continue;
+                }
+
+                double totalPrice = price * quantity;
+
+                String purchaseQuery = "INSERT INTO PurchaseHistory (user_id, prod_id, quantity, total_price) VALUES (?, ?, ?, ?)";
+                PreparedStatement purchaseStmt = conn.prepareStatement(purchaseQuery);
+                purchaseStmt.setInt(1, userId);
+                purchaseStmt.setInt(2, productId);
+                purchaseStmt.setInt(3, quantity);
+                purchaseStmt.setDouble(4, totalPrice);
+                int rowsInserted = purchaseStmt.executeUpdate();
+
+                if (rowsInserted > 0) {
+                    purchaseSuccessful = true;
+
+                    String updateStockQuery = "UPDATE Products SET stock = stock - ? WHERE prod_id = ?";
+                    PreparedStatement updateStockStmt = conn.prepareStatement(updateStockQuery);
+                    updateStockStmt.setInt(1, quantity);
+                    updateStockStmt.setInt(2, productId);
+                    updateStockStmt.executeUpdate();
+
+                    String deleteCartQuery = "DELETE FROM Cart WHERE cart_id = ?";
+                    PreparedStatement deleteCartStmt = conn.prepareStatement(deleteCartQuery);
+                    deleteCartStmt.setInt(1, cartId);
+                    deleteCartStmt.executeUpdate();
+                }
+            }
+            return purchaseSuccessful;
+        } catch (Exception e) {
+            System.err.println("Error during purchase: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    @Override
+    public double calculateTotalBill(int userId) {
+        double totalBill = 0.0;
+        try (Connection conn = DataBaseConnection.connect()) {
+            String query = "SELECT SUM(ph.total_price) AS total_bill FROM PurchaseHistory ph WHERE ph.user_id = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                totalBill = rs.getDouble("total_bill");
+            }
+        } catch (Exception e) {
+            System.err.println("Error calculating total bill: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return totalBill;
+    }
+}

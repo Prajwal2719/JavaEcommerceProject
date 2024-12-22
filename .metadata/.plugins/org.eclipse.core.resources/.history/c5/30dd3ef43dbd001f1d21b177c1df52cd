@@ -1,0 +1,80 @@
+package com.ecommerce.database;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.ecommerce.interfaces.CartDAOInterface;
+import com.ecommerce.model.Cart;
+
+public class CartDAOImpl implements CartDAOInterface{
+
+	@Override
+	public boolean addToCart(int userId, int productId, int quantity) {
+		try (Connection conn = DataBaseConnection.connect()) {
+            // Check stock availability
+            String stockQuery = "SELECT quantity, price FROM Products WHERE prod_id = ?";
+            PreparedStatement stockStmt = conn.prepareStatement(stockQuery);
+            stockStmt.setInt(1, productId);
+            ResultSet rs = stockStmt.executeQuery();
+
+            if (rs.next()) {
+                int availableStock = rs.getInt("quantity");
+
+                if (quantity > availableStock) {
+                    System.out.println("Insufficient stock available.");
+                    return false;
+                }
+
+                // Add to Cart
+                String cartQuery = "INSERT INTO Cart (user_id, prod_id, quantity) VALUES (?, ?, ?)";
+                PreparedStatement cartStmt = conn.prepareStatement(cartQuery);
+                cartStmt.setInt(1, userId);
+                cartStmt.setInt(2, productId);
+                cartStmt.setInt(3, quantity);
+
+                int rowsInserted = cartStmt.executeUpdate();
+
+                if (rowsInserted > 0) {
+                    // Update product stock
+                    String updateStockQuery = "UPDATE Products SET quantity = quantity - ? WHERE prod_id = ?";
+                    PreparedStatement updateStockStmt = conn.prepareStatement(updateStockQuery);
+                    updateStockStmt.setInt(1, quantity);
+                    updateStockStmt.setInt(2, productId);
+                    updateStockStmt.executeUpdate();
+
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+	@Override
+	public List<Cart> getCartItems(int userId) {
+		List<Cart> cartItems = new ArrayList<>();
+        try (Connection conn = DataBaseConnection.connect()) {
+            String query = "SELECT * FROM Cart WHERE user_id = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Cart cart = new Cart();
+                cart.setCartId(rs.getInt("cart_id"));
+                cart.setUserId(rs.getInt("user_id"));
+                cart.setProductId(rs.getInt("prod_id"));
+                cart.setQuantity(rs.getInt("quantity"));
+                cartItems.add(cart);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return cartItems;
+    }
+}
+

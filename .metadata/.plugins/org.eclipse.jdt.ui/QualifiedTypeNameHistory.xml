@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<qualifiedTypeNameHistroy>
+<fullyQualifiedTypeName name="com.ecommerce.database.DataBaseConnection"/>
+<fullyQualifiedTypeName name="com.ecommerce.interfaces.UserDAOInterface"/>
+<fullyQualifiedTypeName name="java.sql.DriverManager"/>
+<fullyQualifiedTypeName name="com.ecommerce.database.ProductDAO"/>
+<fullyQualifiedTypeName name="com.ecommerce.interfaces.ProductDAOInterface"/>
+<fullyQualifiedTypeName name="com.ecommerce.database.ProductDAOImpl"/>
+<fullyQualifiedTypeName name="com.ecommerce.interfaces.CartDAOInterface"/>
+<fullyQualifiedTypeName name="java.util.ArrayList"/>
+<fullyQualifiedTypeName name="com.ecommerce.interfaces.PurchaseHistoryDAOInterface"/>
+<fullyQualifiedTypeName name="java.sql.Connection"/>
+<fullyQualifiedTypeName name="java.sql.PreparedStatement"/>
+<fullyQualifiedTypeName name="java.sql.ResultSet"/>
+<fullyQualifiedTypeName name="java.util.Scanner"/>
+<fullyQualifiedTypeName name="java.util.List"/>
+<fullyQualifiedTypeName name="com.ecommerce.model.Cart"/>
+<fullyQualifiedTypeName name="com.ecommerce.model.Product"/>
+<fullyQualifiedTypeName name="com.ecommerce.model.User"/>
+<fullyQualifiedTypeName name="com.ecommerce.database.PurchaseHistoryDAOImpl"/>
+<fullyQualifiedTypeName name="com.ecommerce.database.CartDAOImpl"/>
+<fullyQualifiedTypeName name="com.ecommerce.database.UserDAOImpl"/>
+</qualifiedTypeNameHistroy>

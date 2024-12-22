@@ -1,0 +1,52 @@
+package com.ecommerce.database;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import com.ecommerce.interfaces.PurchaseHistoryDAOInterface;
+
+public class PurchaseHistoryDAOImpl implements PurchaseHistoryDAOInterface {
+
+	public boolean purchaseItems(int userId) {
+        try (Connection conn = DataBaseConnection.connect()) {
+            // Get items from the cart
+            String cartQuery = "SELECT * FROM Cart WHERE user_id = ?";
+            PreparedStatement cartStmt = conn.prepareStatement(cartQuery);
+            cartStmt.setInt(1, userId);
+            ResultSet cartRs = cartStmt.executeQuery();
+
+            boolean purchaseSuccessful = false;
+
+            while (cartRs.next()) {
+                int productId = cartRs.getInt("prod_id");
+                int quantity = cartRs.getInt("quantity");
+                double totalPrice = cartRs.getDouble("total_price");
+
+                // Add entry to PurchaseHistory
+                String purchaseQuery = "INSERT INTO PurchaseHistory (user_id, prod_id, quantity, total_price) VALUES (?, ?, ?, ?)";
+                PreparedStatement purchaseStmt = conn.prepareStatement(purchaseQuery);
+                purchaseStmt.setInt(1, userId);
+                purchaseStmt.setInt(2, productId);
+                purchaseStmt.setInt(3, quantity);
+                purchaseStmt.setDouble(4, totalPrice);
+
+                int rowsInserted = purchaseStmt.executeUpdate();
+
+                if (rowsInserted > 0) {
+                    purchaseSuccessful = true;
+
+                    // Remove item from Cart
+                    String deleteCartQuery = "DELETE FROM Cart WHERE cart_id = ?";
+                    PreparedStatement deleteCartStmt = conn.prepareStatement(deleteCartQuery);
+                    deleteCartStmt.setInt(1, cartRs.getInt("cart_id"));
+                    deleteCartStmt.executeUpdate();
+                }
+            }
+
+            return purchaseSuccessful;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+}
